@@ -1,0 +1,33 @@
+{
+  "$comment": "Schema for .bip-history.json — per-project post history. Tracks posts, context lines used, topics covered, and edit diffs for voice evolution.",
+  "posts": [
+    {
+      "date": "YYYY-MM-DD",
+      "type": "single | thread",
+      "topic": "one-line summary of what the post is about",
+      "hook": "first line of the post",
+      "context_line": "the one-line project context used in this post",
+      "text": "full post text",
+      "media": "video | image | card_image | none",
+      "session_source": "session id or filename this post was drawn from",
+      "engagement": null,
+      "draft_file": "drafts/draft-YYYY-MM-DD-NNN.md",
+      "draft_text": "original AI draft text before user edits",
+      "final_text": "user-approved final text",
+      "was_edited": "true | false — whether user modified the draft",
+      "diff_processed": "false — set to true after voice evolution loop processes the diff"
+    }
+  ],
+  "context_lines_used": [
+    "built a gamified personal OS with claude",
+    "building a system where breaking a streak gives you 2x xp"
+  ],
+  "topics_covered": [
+    "streak was 0 despite days of building",
+    "voice agent setup with wake word"
+  ],
+  "stats": {
+    "total_posts": 0,
+    "last_post_date": null
+  }
+}
