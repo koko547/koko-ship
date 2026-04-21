@@ -18,6 +18,7 @@ research/voice-pattern-analysis.json
 .obsidian/
 
 # one-time docs (not part of the product)
+build-log.md
 koko-ship-skill-iterations.md
 koko-ship-github-prep.md
 
