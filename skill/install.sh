@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Install koko-ship skill into ~/.claude/skills/ via symlink.
-# Symlink (not copy) so edits in this repo apply immediately to the installed skill.
+# Install koko-ship skill into ~/.claude/skills/ by copying the skill folder.
 
 set -e
 
@@ -10,23 +9,28 @@ TARGET="$TARGET_BASE/koko-ship"
 
 mkdir -p "$TARGET_BASE"
 
-if [ -L "$TARGET" ]; then
+if [ -d "$TARGET" ]; then
+  echo "existing koko-ship skill found at: $TARGET"
+  echo "replacing with new version from: $SKILL_DIR"
+  rm -rf "$TARGET"
+elif [ -L "$TARGET" ]; then
   echo "removing existing symlink: $TARGET"
   rm "$TARGET"
 elif [ -e "$TARGET" ]; then
-  echo "ERROR: $TARGET exists and is not a symlink. remove it manually first."
+  echo "ERROR: $TARGET exists and is not a directory or symlink. remove it manually first."
   exit 1
 fi
 
-ln -s "$SKILL_DIR" "$TARGET"
-echo "✓ installed → $TARGET → $SKILL_DIR"
+cp -r "$SKILL_DIR" "$TARGET"
+
 echo ""
-echo "verify:"
-echo "  ls -la $TARGET"
+echo "installed koko-ship skill to $TARGET"
 echo ""
-echo "test in any project:"
-echo "  cd /path/to/some/project"
-echo "  claude  # then ask: 'make a BIP post about today'"
+echo "usage (in any project you're building):"
+echo "  cd /path/to/your/project"
+echo "  claude"
+echo "  > set up my voice    (first time only)"
+echo "  > make a bip post"
 echo ""
-echo "to update voice or templates: edit files in this repo, changes apply immediately."
-echo "to uninstall: rm $TARGET"
+echo "to update: re-run this script."
+echo "to uninstall: rm -rf $TARGET"

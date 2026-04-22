@@ -1,6 +1,11 @@
 ---
 name: koko-ship
-description: Generate build-in-public X (Twitter) posts from your current Claude Code session. Use whenever the user wants to share what they built today, create a BIP/build-in-public update, draft a tweet about coding progress, post about a feature they just shipped, summarize a session for social media, or generate dev content for X. Works for both developers and non-developers (vibe coders) — translates the session's intent, process, struggle, and outcome into a tweet that sounds like the user, not like a marketing intern.
+description: >
+  Generates build-in-public posts in the user's voice.
+  Reads past building sessions, extracts moments worth sharing,
+  and drafts posts with voice accuracy scoring.
+  Use when user says "make a bip post", "bip post",
+  "write a post", or "set up my voice".
 ---
 
 # koko-ship — build-in-public post generator
@@ -48,50 +53,17 @@ Before doing anything else, check if a voice profile exists in this priority ord
 
 **If only #3 exists (user has never set up their voice)** → enter **Voice Setup Mode** before generating anything. Do not skip.
 
-Exact behavior:
+Tell the user you need ~2 minutes to learn their voice. Offer sources:
+- **Default:** scan past Claude Code conversations (`scripts/setup_voice_from_claude_logs.py`)
+- **Optional 1:** quick questionnaire — 5 questions (`scripts/setup_voice_questionnaire.py`)
+- **Optional 2:** X account scraping (coming in v1.1)
+- **Optional 3:** paste 3-5 writing samples (`scripts/setup_voice_from_paste.py`)
 
-> before i can generate posts that sound like you, i need a couple minutes to learn your voice.
->
-> by default i'll learn from:
->
->   ✅ your past Claude Code conversations
->   (i'll only read your messages, not Claude's — and only to learn how you write)
->
-> want to add more sources for stronger accuracy? (optional, pick any)
->   [ ] 1. quick questionnaire (2 min — 5 questions about your style)
->   [ ] 2. your X account (coming in v1.1)
->   [ ] 3. paste 3-5 of your own writings (posts, messages, anything you wrote)
->
-> reply: 'go' to use defaults / add numbers like '1 and 3' / or 'skip' to use generic voice
+User says "go" → run default. User picks options → run selected scripts, merge results. Save to `~/.bip-voice.json`. Confirm what was found (language, tone, median length, top phrases), then proceed to Step 1.
 
-**If user says "go"** → run `scripts/setup_voice_from_claude_logs.py` with no flags → saves `~/.bip-voice.json` → confirm what was found → proceed to Step 1.
+User says "skip" → confirm once ("posts will sound generic"). If confirmed → use bundled default for this session only. Gate triggers again next session.
 
-**If user adds optional sources** → run the corresponding scripts:
-  - `1` → walk through the 5 questions interactively (see `scripts/setup_voice_questionnaire.py --print-questions` for the exact questions). Collect answers. Run the script with `--answers-json`.
-  - `2` → inform them this is coming in v1.1. Offer the other paths instead.
-  - `3` → ask them to paste 3-5 samples of their own writing (tweets, messages, posts — anything that sounds like them). Collect the samples. Run `scripts/setup_voice_from_paste.py --samples-json`.
-
-When multiple sources are selected, run all of them, then **merge** the results: use the Claude logs analysis as the base, then overlay any stronger signals from the other sources (e.g., if paste samples show consistent emoji usage that Claude logs don't, adopt the paste signal for emoji).
-
-Save the merged profile to `~/.bip-voice.json`. Confirm to the user:
-
-> ✓ voice profile built from [N sources].
-> found [M] messages across [K] projects.
-> your voice: [primary_lang], [casual/formal], [emoji_pct]% emoji, median [N] chars.
-> top phrases: [list].
->
-> now generating your post...
-
-Then proceed to Step 1.
-
-**If user says "skip"** → confirm once more:
-
-> heads up — without a voice profile, posts will sound like generic AI, not like you.
-> are you sure? (yes to continue with generic voice for this session, or 'set up' to start voice setup)
-
-If confirmed → use bundled default profile for **this session only**. Next session, ask again. Never write anything to disk when skipped — the gate will trigger again next time.
-
-**"set up my voice"** — at any time, in any session, the user can say this phrase to re-enter Voice Setup Mode and rebuild their voice profile from scratch.
+**"set up my voice"** — at any time, re-enters Voice Setup Mode.
 
 ---
 
@@ -101,17 +73,7 @@ Follow these steps in order. Skip steps that don't apply to the session.
 
 ### Step 0.5: Process previous edit diffs (runs before drafting)
 
-Before generating anything, check if the user edited a previous post:
-
-1. Read `<cwd>/.bip-history.json`
-2. Find entries where `was_edited: true` AND `diff_processed: false`
-3. For each unprocessed edit:
-   a. Compare `draft_text` vs `final_text`
-   b. Extract patterns using the diff analysis prompt in `references/voice-evolution-v2.md` → Step 4
-   c. Categorize changes: REMOVED / REPLACED / SHORTENED / ADDED / STRUCTURAL / KEPT
-   d. Append entry to `voice/changelog.md` with the diff patterns
-   e. Set `diff_processed: true` in `.bip-history.json`
-4. After 5+ changelog entries from edits, propose profile updates to the user (see `references/voice-evolution-v2.md` → Step 6). Only add to `voice/profile.md` with user approval. Require 3+ occurrences of a pattern before proposing.
+Before generating anything, check for unprocessed edit diffs per `references/voice-evolution-v2.md`. In short: read `.bip-history.json`, find entries where `was_edited: true` AND `diff_processed: false`, extract patterns from the diff, append to `~/.bip-changelog.json`, and mark as processed. After 5+ entries with recurring patterns (3+ occurrences), propose updates to `~/.bip-voice.json` → `learned_patterns` with user approval.
 
 If no unprocessed edits exist, skip to Step 1.
 
@@ -133,10 +95,10 @@ Read the voice profile (priority order in section above). Pay attention to:
 - `language.primary` — generate in this language
 - `tone.do` and `tone.dont`
 - `length.target_chars` and `length.optimal_lines`
-- `personal_vocabulary.phrases_koko_uses` — borrow these naturally
+- `personal_vocabulary.phrases_to_use_freely` — borrow these naturally
 - `personal_vocabulary.phrases_banned` — never use these
 - `emoji.current_default` — usually "none"; only insert if the moment truly calls for it
-- `hashtags.product_map` — may pre-define the hashtag for this project
+- `hashtags` — trailing branded hashtag rules (auto-detected per Step 1)
 
 ### Step 3: Check history (avoid repetition)
 
@@ -271,7 +233,7 @@ This is not a failure. Most building days don't produce posts. Forcing a post fr
 
 #### For non-developer / vibe coder sessions
 
-Lean heavily into the **conversation moments**: what exact words the user said to Claude, what came back, what the user asked Claude to change. That's the unique angle and the basis for the `ai_credit_story` template. Keep simple Q&A conversations — they contain the "why" context.
+Lean heavily into the **conversation moments**: what exact words the user said to Claude, what came back, what the user asked Claude to change. That's the unique angle for vibe coder posts. Keep simple Q&A conversations — they contain the "why" context.
 
 ### Step 5: Apply security filter
 
@@ -323,7 +285,7 @@ Internally write THREE different drafts of the post. Do not show all three to th
 
 ### Step 7.5: Self-evaluation gate (REQUIRED before delivery)
 
-**This is the 1st gate — candidate filter.** It picks the best draft of three. The evaluator agent (`.claude/agents/evaluate.md`) is the 2nd gate with stricter thresholds for the publish decision. This gate asks "is this good enough to show the user?" The evaluator asks "is this good enough to publish?"
+**This is the 1st gate — candidate filter.** It picks the best draft of three. The evaluator agent (`references/evaluate.md`) is the 2nd gate with stricter thresholds for the publish decision. This gate asks "is this good enough to show the user?" The evaluator asks "is this good enough to publish?"
 
 Score ALL THREE drafts from Step 7 against the 4-axis rubric in `references/eval-rubric.md`. This is the single most important step in this skill — it is what separates koko-ship from generic AI output.
 
@@ -402,65 +364,13 @@ This saved draft is the baseline for diff analysis if the user edits before appr
 
 ### Step 8.5: Capture & suggest media
 
-For every post, try to auto-capture media from the project before falling back to suggestions.
+**Auto-capture:** Run `python3 "${SKILL_DIR}/scripts/capture_screenshot.py" --detect --cwd "$(pwd)"` to find capturable sources. If a running dev server or HTML file exists, capture a screenshot or short video. Always prefer live URL over static HTML. Save to `.bip-images/`.
 
-**Step 8.5.1: Auto-detect capturable sources**
+**Priority:** auto-captured screenshot/video > user's own screenshot > generated card image (Step 9) > text-only. Be specific about WHAT to capture — not "screenshot of result" but "screenshot showing the streak at 0."
 
-Run the capture script in detect mode:
+**Timing rule:** Screenshot must match the post's conclusion. Post ends with resolution → show working state. Post ends with the problem → show broken state. If already fixed, go text-only.
 
-```bash
-python3 "${SKILL_DIR}/scripts/capture_screenshot.py" --detect --cwd "$(pwd)"
-```
-
-This returns: `urls` (running dev servers — always first priority), `html_files` (local HTML pages), `dev_command` (how to start the server).
-
-**Step 8.5.2: Auto-capture if sources exist**
-
-If the post is about a visual feature (dashboard, UI, page, component), and a capturable source exists:
-
-**Always prefer live URL over static HTML file.** A running dev server renders the real UI with real data. A static HTML file may render without JS/data and look different from the actual product.
-
-```bash
-# From running dev server (PREFERRED — real UI with real data)
-python3 "${SKILL_DIR}/scripts/capture_screenshot.py" --url http://localhost:3000 --out .bip-images/<slug>.png
-
-# Short video with scroll
-python3 "${SKILL_DIR}/scripts/capture_screenshot.py" --url http://localhost:3000 --video --duration 4 --out .bip-images/<slug>.webm
-
-# From HTML file (FALLBACK — only if no server running)
-python3 "${SKILL_DIR}/scripts/capture_screenshot.py" --file <html_path> --out .bip-images/<slug>.png
-```
-
-Tell the user what was captured and where it was saved. Show the image if possible.
-
-**Step 8.5.3: Priority order (if auto-capture not possible)**
-
-1. **Auto-captured screenshot/video** (from step above) — strongest, real product
-2. **User's own screenshot** — ask them to capture something specific
-3. **Generated card image** (Step 9) — stats/numbers visualization, fallback only
-4. **None** — only if the post is purely a thought, not a build update
-
-Be specific about WHAT to capture. Not "screenshot of result" but "screenshot of the dashboard showing the streak at 0 with boss HP bars visible."
-
-**Step 8.5.4: Screenshot timing rule**
-
-The screenshot must match the post's conclusion — never contradict it.
-
-- Post ends with **resolution** ("wired the missing tool. now it works.") → screenshot shows the **working state** (proof it's fixed)
-- Post ends with **the problem** ("zero tasks. ever. looked great tho.") → screenshot shows the **broken state** (if still visible). If already fixed → skip screenshot, go text-only. Don't show working when the post says broken.
-
-**Step 8.5.5: No-UI projects (agent, CLI, backend, script)**
-
-If the project has no web UI (no localhost, no HTML files):
-- Default to **text-only post** (no media)
-- If the user wants a screenshot, give them a **specific capture guide** based on the post content:
-  - Tell them exactly what screen to open
-  - Tell them what state to show (matching the post's conclusion — see timing rule)
-  - Tell them what the visual punchline is ("the terminal showing 11 real tasks after it was showing 0")
-  - Give the shortcut: `cmd+shift+4 → drag over the window`
-  - Tell them to save to `.bip-images/` and give you the filename
-
-Never say just "take a screenshot." Always say exactly what to capture, in what state, and why that specific frame supports the post.
+**No-UI projects:** Default to text-only. If the user wants media, give a specific capture guide: what screen, what state, what the visual punchline is.
 
 ### Step 9: (Optional) Generate a card image
 
@@ -479,9 +389,9 @@ The script accepts a JSON payload like:
   "title": "voice profile, built from data",
   "subtitle": "fed viral patterns + my own writing into one ruleset",
   "stats": [
-    {"num": "79", "label": "viral BIP posts", "detail": "filter: 500+ likes, last 6mo"},
-    {"num": "8", "label": "of my own X posts", "detail": "@ink_young_koko"},
-    {"num": "365", "label": "messages to claude", "detail": "from 4 personal projects"}
+    {"num": "50", "label": "writing samples", "detail": "analyzed for voice patterns"},
+    {"num": "5", "label": "signature patterns", "detail": "extracted from your writing"},
+    {"num": "1", "label": "voice profile", "detail": "ready to generate posts"}
   ],
   "code_lines": [
     "{",
@@ -536,7 +446,7 @@ After delivering the first draft, the user will often want changes. Treat their 
 
 - "tighter", "shorter", "cut to ~220", "trim line 3"
 - "more casual", "less hype", "sounds too AI", "more like me"
-- "try a different template", "use the underdog one", "show me all 5"
+- "try a different angle", "use the underdog one", "show me all 5"
 - "different hook", "swap line 2 and 4", "merge the last two lines"
 - "add the part about scraping 1500 first", "remove the marketing intern bit"
 - "replace 'kinda works' with 'just shipped'"
@@ -548,58 +458,16 @@ After every revision:
 
 1. Re-check voice compliance (length, banned phrases, hashtag rule, structure)
 2. Output the new version in the same POST/METADATA format
-3. Briefly note what changed (one line, e.g. "tightened to 218 chars, swapped to underdog_flex template")
+3. Briefly note what changed (one line, e.g. "tightened to 218 chars, tried an underdog angle")
 4. Ask if more revisions are needed or if the user wants to ship it
 
 **Approval signals** (any of these means save to history): "go", "ship it", "good", "save this", "yes", "looks good". Approval saves to `.bip-history.json`. **Approval never publishes** — koko-ship drafts only, never auto-posts.
 
-**Discard signals**: "discard", "scrap it", "start over", "different angle". On discard, draft a fresh post (different template if possible) without saving the previous one.
+**Discard signals**: "discard", "scrap it", "start over", "different angle". On discard, draft a fresh post (different angle) without saving the previous one.
 
-## Template selection — auto, but user can override
+## Angle selection
 
-By default you pick the template based on the session shape (see Step 6 + `references/templates.md`) and rotate based on history. **Always state which template you picked and why** in one line, so the user can intervene before approving.
-
-The user can override at any time, in any phrasing:
-
-- Pre-trigger: "make a BIP post about today using ai_credit_story"
-- Post-draft: "try underdog_flex instead", "use a different template", "this should be a process_day_n"
-- Comparison: "show me 3 variants in different templates", "give me a four_line and an underdog version side by side"
-
-When the user asks for multiple variants, output them in the same response with a short label per variant (`### variant 1 — four_line_minimalist` etc.) and let them pick.
-
-## Output format example
-
-When the skill triggers, your response to the user should look like:
-
-> Read your session and drafted a post. Detected project: `koko-ship` → tag `#koko-ship`. Last 3 posts used story types `[process, shipped, lesson]` so I picked `four_line_minimalist`.
->
-> ```
-> POST (242 chars)
-> ---
-> 79 viral BIP posts (500+ likes, last 6 months).
-> 8 of my own X posts.
-> 365 of my messages to claude.
->
-> fed it all into a voice profile so AI writes posts that sound like me, not a marketing intern.
->
-> day 1 of koko-ship. just testing, kinda works.
->
-> #koko-ship
-> ```
->
-> **Media suggestion:** screen recording of the terminal output showing the analysis numbers, OR a generated card image (want me to render it?).
->
-> Want me to tweak the tone, try a different template, or render the image?
-
-## Things NOT to do
-
-- Don't auto-publish anywhere. This skill drafts only.
-- Don't generate threads unless the user explicitly asks. Single tweet wins (73% of viral BIP posts are single).
-- Don't use generic hashtags (`#buildinpublic`, `#indiehackers`, etc.). The voice profile bans them.
-- Don't pad to 280 chars. Tight beats are better than full lines.
-- Don't use marketing voice ("excited to announce", "thrilled to share", "proud to introduce").
-- Don't fish for engagement with questions to the audience ("what do you think?").
-- Don't insert emoji as decoration. Default is zero. Only when the moment genuinely calls for one.
+By default, pick the approach based on the session shape and writing principles. If the user says "try a different angle" or "make it more like an underdog story," rewrite from that direction. When the user asks for multiple variants, output them in the same response with a short label each.
 
 ## File locations summary
 
@@ -610,6 +478,7 @@ When the skill triggers, your response to the user should look like:
 | `references/eval-rubric.md` | Canonical 4-axis quality rubric for self-eval | yes |
 | `references/history-schema.json` | Schema for `.bip-history.json` | yes |
 | `references/voice-evolution-v2.md` | Voice evolution spec — diff analysis + learning loop | yes |
+| `references/evaluate.md` | Evaluator agent — 2nd gate for publish decision | yes |
 | `scripts/generate_image.py` | Render a card PNG from a JSON payload | yes |
 | `<cwd>/.bip-voice.json` | Project-local voice override | optional |
 | `<cwd>/.bip-config.json` | Project-local config (hashtag etc.) | optional |

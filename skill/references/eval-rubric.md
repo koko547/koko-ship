@@ -3,7 +3,7 @@
 This is the canonical 4-axis quality rubric for koko-ship posts. It is used by:
 
 - **The skill itself** — for self-evaluation before delivering a draft to the user (see SKILL.md Step 7.5)
-- **The Evaluate Agent** (`.claude/agents/evaluate.md`, project-internal only) — as a second-pass gate when working inside the koko-ship build itself
+- **The Evaluate Agent** (`references/evaluate.md`) — as a second-pass gate for the publish decision
 
 If you change this rubric, both consumers update automatically. **Single source of truth.**
 

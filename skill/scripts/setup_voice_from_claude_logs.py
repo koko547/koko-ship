@@ -190,8 +190,17 @@ def analyze(messages):
             bg = " ".join(words[i:i + 2])
             bigram_counts[bg] += 1
     BIGRAM_BLACKLIST = {"of the", "to the", "in the", "is a", "i am", "i have", "i was"}
-    top_bigrams = [bg for bg, c in bigram_counts.most_common(40)
-                   if bg not in BIGRAM_BLACKLIST and c >= 3][:15]
+    # Filter out meta/prompt language that leaks from Claude session context
+    META_STOPWORDS = {
+        "the user", "voice profile", "type string", "assistant message",
+        "system prompt", "claude code", "tool use", "tool result",
+        "function call", "skill md", "content type", "command name",
+        "file path", "line number", "read file", "edit file",
+    }
+    top_bigrams = [bg for bg, c in bigram_counts.most_common(60)
+                   if bg not in BIGRAM_BLACKLIST
+                   and bg not in META_STOPWORDS
+                   and c >= 3][:15]
 
     # Question vs statement
     question_pct = round(100 * sum(1 for m in messages if m["text"].rstrip().endswith("?")) / len(messages))

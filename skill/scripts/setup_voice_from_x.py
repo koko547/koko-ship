@@ -11,8 +11,7 @@ For v1.0 beta:
     - setup_voice_questionnaire.py     (5-question interview)
 
   - If you really want X-based voice now, you can DIY:
-      1. Use the bundled scrape script in /scripts/upload_to_sheets.py as a
-         template (requires your own Apify token)
+      1. Export your tweets manually or via a scraping tool
       2. Then feed the resulting tweets to setup_voice_from_paste.py
 """
 import sys

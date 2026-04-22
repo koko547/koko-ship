@@ -260,7 +260,7 @@ def read_session(filepath: Path) -> dict | None:
         "file": str(filepath),
         "started_at": started.isoformat(),
         "ended_at": ended.isoformat(),
-        "duration_minutes": max(1, int((ended - started).total_seconds() / 60)),
+        "duration_minutes": min(480, max(1, int((ended - started).total_seconds() / 60))),
         "n_user_messages": len(user_messages),
         "n_assistant_messages": len(assistant_raw),
         "summary": summary,

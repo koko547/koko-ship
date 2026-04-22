@@ -1,79 +1,92 @@
 # koko-ship
 
-AI made building easy. it made marketing boring.
+a Claude Code skill that generates build-in-public posts in your voice — not generic AI voice.
 
-a voice agent that learns how you write and generates build-in-public posts that sound like you, not like everyone else's AI.
+## who this is for
 
----
+builders who ship with AI and want to talk about it without sounding like everyone else's ChatGPT.
 
-## what this is
+## prerequisites
 
-koko-ship reads your past building sessions, extracts the one moment worth sharing, and drafts a post in your voice. it scores every draft on voice accuracy and content quality before showing it to you. when you edit a draft, it learns from the diff — so each post gets sharper.
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and logged in (`claude` command works in your terminal)
+- Claude Pro subscription or API access
+- Python 3.8+ (optional — only needed for image generation features)
 
-not a template. not a prompt wrapper. a voice engine that compounds.
-
-## quick start
-
-### 1. clone
+## install
 
 ```bash
 git clone https://github.com/koko547/koko-ship.git
-cd koko-ship
+bash koko-ship/skill/install.sh
 ```
 
-### 2. install the skill
+this copies the skill to `~/.claude/skills/koko-ship/`. you can delete the cloned repo after.
+
+## usage
+
+open Claude Code **in any project you're actively building** (not the koko-ship repo):
 
 ```bash
-bash skill/install.sh
+cd ~/my-actual-project
+claude
 ```
 
-this creates a symlink in `~/.claude/skills/` so Claude Code can find it.
-
-### 3. set up your voice
-
-open any project in Claude Code and say:
+then tell Claude what you want. these are **prompts to Claude**, not shell commands:
 
 ```
-set up my voice
+> set up my voice
 ```
 
-the skill walks you through it. options:
-- **default:** scans your past Claude Code conversations (reads your messages only)
-- **questionnaire:** 5 quick questions about how you write
-- **paste samples:** drop in 3-5 things you've written (tweets, messages, notes)
-
-takes ~2 minutes. builds a voice profile at `~/.bip-voice.json`.
-
-### 4. make your first post
-
-in any project directory:
+walks you through a 2-minute voice setup. scans your past Claude conversations, optional questionnaire, optional paste samples. builds a profile at `~/.bip-voice.json`.
 
 ```
-make a bip post
+> make a bip post
 ```
 
-the skill reads your recent building sessions, picks a moment, drafts 3 versions internally, scores them, and delivers the strongest one.
+reads your recent building sessions, picks a moment, drafts 3 versions internally, scores them, delivers the strongest one.
 
-## how it works
+## the agent team
 
-```
-"make a bip post"
-    → reads past sessions (24h, fallback 7d)
-    → extracts candidate moments
-    → you pick one (or it picks if there's only one)
-    → drafts 3 versions with different hooks
-    → self-evaluates all 3 (hook / story / authenticity / relatability)
-    → delivers the winner
-    → you edit → say "done"
-    → diff saved → patterns extracted next run
-    → voice profile sharpens over time
-```
+three agents work behind one command.
 
-**two quality gates:**
+**writer** — reads your voice profile and recent sessions. drafts 3 versions. picks the strongest.
 
-| gate | what it checks | threshold |
-|------|---------------|-----------|
-| self-eval (1st) | picks best of 3 drafts | all axes ≥ 7/10 (28/40) |
+**editor** — scores voice accuracy and content quality. sends it back if something's off.
+
+**QA** — catches jargon, repetition, sensitive info. platform-ready check.
+
+## what it does
+
+1. reads your recent Claude Code sessions for this project
+2. extracts candidate moments (things that shipped, broke, or surprised you)
+3. asks you to pick one moment
+4. drafts 3 versions internally with different hooks
+5. self-evaluates all 3 on hook / story / authenticity / relatability
+6. delivers the strongest one
+7. you edit, it learns from the diff for next time
+
+## before / after
+
+without koko-ship:
+
+> Built a cool thing with Claude today! Excited to share my progress on the dashboard. Really loving how AI makes development faster. #buildinpublic #indiehackers
+
+with koko-ship:
+
+> two quality gates. same passing score. that's a bug.
+>
+> building a voice engine that writes posts in your voice. today i found the gate that picks the best draft and the gate that decides "ready to publish" were using the same threshold.
+>
+> "good enough to show you" ≠ "good enough to post."
+>
+> #koko-ship
+
+## two quality gates
+
+every post goes through two checks before you see it:
+
+| gate | what it does | threshold |
+|------|-------------|-----------|
+| self-eval (1st) | picks best of 3 drafts | all axes ≥ 7/10 |
 | evaluator (2nd) | publish decision | voice 32/40+, content 30/40+ |
 
 ## voice evolution
@@ -82,81 +95,32 @@ the system learns from your edits — every change you make teaches it.
 
 1. AI draft saved before you see it
 2. you edit however you want, say "done"
-3. next run: diff analysis extracts patterns (removed / replaced / shortened / added / kept)
-4. `changelog.md` accumulates learnings
-5. after 5+ entries with recurring patterns: profile update suggested
-6. you approve — evaluator checklist updated
-7. next post is sharper
+3. next run: diff analysis extracts patterns
+4. after 5+ edits with recurring patterns: profile update suggested
+5. you approve — voice profile updated
+6. next post is sharper
 
-target: post 1-3 you edit ~60%. post 8-10 you edit ~10%. post 15+ it just sounds like you.
+target: post 1-3 you edit ~60%. post 8-10 ~10%. post 15+ you barely touch it.
 
-## file structure
+## voice profile
 
-```
-skill/
-├── SKILL.md                  — main instructions (~600 lines)
-├── install.sh                — symlink installer
-├── scripts/                  — voice setup, session reader, capture, image gen
-└── references/               — writing principles, eval rubric, voice evolution spec
+your voice lives at `~/.bip-voice.json`. it's generated locally, never committed to any repo. stores how you write: tone, vocabulary, length, emoji usage, banned phrases. the profile sharpens over time as you edit posts.
 
-~/.bip-voice.json             — your voice profile (generated locally)
+## python dependencies (optional)
 
-<your-project>/
-├── .bip-history.json         — post history + edit diffs
-└── .bip-drafts/              — AI originals for diff comparison
+image generation and screenshot capture require Playwright:
+
+```bash
+pip install playwright && playwright install chromium
 ```
 
-voice data is gitignored. it's personal. you generate it locally.
+the core workflow (voice setup + post drafting) works without any Python dependencies.
 
-## the voice engine
+## uninstall
 
-**profile.md** — how you write. signature patterns, sentence rhythm, vocabulary, emotional expression. the evaluator's primary reference.
-
-**patterns.md** — how you think. problem approach, reaction style, framing habits, values. drives content angle selection.
-
-**marketing-voice.md** — the publishable filter. what transfers to public posts, what stays private, post characteristics, worked examples.
-
-**changelog.md** — voice evolution tracker. every update logged with what changed, why, and which patterns were affected.
-
-## writing principles
-
-no rigid templates. 5 principles that let each post take its own shape:
-
-1. **hook first** — first line stops the scroll
-2. **context fast** — reader knows what this project is within 2 lines
-3. **one moment** — one post = one thing that happened
-4. **specific > clever** — real numbers, real words, real names
-5. **end when it lands** — punchline hits, stop
-
-plus: WHY > WHAT, quote the session, imperfection is authenticity, history variety.
-
-## requirements
-
-- Claude Code (CLI, desktop app, or VS Code extension)
-- Claude Pro subscription or API access
-- works with Opus and Sonnet
-
-## faq
-
-**"how is this different from prompting ChatGPT to write like me?"**
-
-chatgpt matches surface patterns. koko-ship extracts deeper signals — sentence rhythm, humor timing, how you handle emotion, what you'd never say. and it has an evaluator that catches when patterns feel forced.
-
-**"what data do you need?"**
-
-only what you give it — writing samples, session logs, past posts. nothing leaves your machine except API calls to generate content.
-
-**"does it get better over time?"**
-
-yes. every edit you make teaches the system. by post 10, you'll edit less. by post 15, it just sounds like you.
-
-**"can I use this outside Claude Code?"**
-
-the skill files are .md — they work in any Claude project, or any agent that reads markdown instructions.
-
-**"what if I have no session logs?"**
-
-the skill asks you what you worked on. describe a moment and it drafts from there. paste samples and the questionnaire work too.
+```bash
+rm -rf ~/.claude/skills/koko-ship
+```
 
 ## license
 
@@ -164,4 +128,4 @@ MIT
 
 ---
 
-made by [koko](https://x.com/ink_young_koko) — building this in public.
+made by [koko](https://x.com/ink_young_koko)

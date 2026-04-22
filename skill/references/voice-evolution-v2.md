@@ -7,23 +7,17 @@ This is the core value loop: use → edit → learn → better output → less e
 
 ---
 
-## File structure changes
-
-Add to existing `~/.koko-ship/` (or wherever the skill stores data):
+## Runtime file locations
 
 ```
-~/.koko-ship/
-├── voice/
-│   ├── profile.md          ← existing, will be updated via suggestions
-│   ├── patterns.md         ← existing
-│   ├── marketing-voice.md  ← existing
-│   └── changelog.md        ← NEW: auto-generated, tracks all diffs
-├── history/
-│   ├── .bip-history.json   ← existing
-│   └── drafts/             ← NEW: stores AI original drafts
-│       ├── draft-2026-04-20-001.md
-│       └── draft-2026-04-21-002.md
-└── raw/
+~/.bip-voice.json             ← user's voice profile (updated via learned_patterns)
+~/.bip-changelog.json         ← NEW: auto-generated, tracks all edit diffs
+
+<project>/
+├── .bip-history.json         ← per-project post history + edit metadata
+└── .bip-drafts/              ← NEW: stores AI original drafts
+    ├── draft-2026-04-20-001.md
+    └── draft-2026-04-21-002.md
 ```
 
 ---
@@ -141,7 +135,7 @@ Do not generalize — every pattern must reference the actual words.
 
 ### Step 5: Write to changelog.md
 
-Append to `voice/changelog.md`:
+Append to `~/.bip-changelog.json` (create if it doesn't exist). Example entry format:
 
 ```markdown
 ## 2026-04-20 — post #3
@@ -174,12 +168,12 @@ Append to `voice/changelog.md`:
 After 5+ changelog entries, Orchestrator proposes profile updates:
 
 ```
-Trigger: changelog.md has 5+ unprocessed entries
+Trigger: ~/.bip-changelog.json has 5+ unprocessed entries
 
 Action:
 1. Read all changelog entries
 2. Find recurring patterns (appears 3+ times)
-3. Propose additions to profile.md
+3. Propose additions to ~/.bip-voice.json → learned_patterns
 
 Output to user:
 "i've noticed some patterns from your edits:
@@ -193,27 +187,29 @@ Output to user:
 
 User: "yes" / "yes to 1 and 3, not 2" / "no"
 
-→ Update profile.md accordingly
-→ Add to evaluator checklist (must-have / enhancer)
+→ Update ~/.bip-voice.json → learned_patterns accordingly
+→ Evaluator reads learned_patterns at runtime
 → Mark changelog entries as processed
 ```
 
 ### Step 7: Update evaluator integration
 
-When profile.md gets new patterns from user edits:
+When `~/.bip-voice.json` gets new learned patterns from user edits:
 
-Add to the evaluator checklist section of profile.md:
-```markdown
-## evaluator checklist (updated via user edits)
+The patterns are stored in the `learned_patterns` section of the voice profile JSON:
+```json
+"learned_patterns": {
+  "must_have": [
+    "no 'excited to share' type openers (5/5 posts)",
+    "self-deprecating closer present (3/5 posts)"
+  ],
+  "never_use": [],
+  "preferences": [
+    "mid-section paragraphs ≤ 2 sentences (4/5 posts)"
+  ],
+  "last_updated": "2026-04-25"
+}
 
-### must-have (from edits — appeared 3+ times)
-- [ ] no "excited to share" type openers
-- [ ] mid-section paragraphs ≤ 2 sentences
-- [ ] self-deprecating closer present
-
-### learned preferences (from edits — appeared 2 times, monitoring)
-- [ ] uses specific tool/feature names over generic descriptions
-- [ ] prefers question-form hooks
 ```
 
 Editor agent should read these and score against them.

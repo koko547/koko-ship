@@ -40,13 +40,13 @@ except ImportError:
     sys.exit("playwright not installed. run: pip install playwright && playwright install chromium")
 
 DEFAULT_PAYLOAD = {
-    "label": "DAY 1 OF KOKO-SHIP",
+    "label": "DAY 1",
     "title": "voice profile, built from data",
-    "subtitle": "fed viral patterns + my own writing into one ruleset",
+    "subtitle": "fed writing samples into a voice engine",
     "stats": [
-        {"num": "79", "label": "viral BIP posts", "detail": "filter: 500+ likes, last 6mo"},
-        {"num": "8", "label": "of my own X posts", "detail": "@ink_young_koko"},
-        {"num": "365", "label": "messages to claude", "detail": "from 4 personal projects"},
+        {"num": "50", "label": "writing samples", "detail": "analyzed for voice patterns"},
+        {"num": "5", "label": "signature patterns", "detail": "extracted from your writing"},
+        {"num": "1", "label": "voice profile", "detail": "ready to generate posts"},
     ],
     "code_lines": [
         "{",
@@ -60,7 +60,7 @@ DEFAULT_PAYLOAD = {
         "}",
     ],
     "footer_left": "build-in-public, day 1",
-    "hashtag": "#koko-ship",
+    "hashtag": "#your-project",
 }
 
 

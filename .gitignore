@@ -2,13 +2,26 @@
 voice/
 raw/
 
+# internal vault files (not part of the product)
+CLAUDE.md
+index.md
+log.md
+build-log.md
+koko-ship-skill-iterations.md
+koko-ship-github-prep.md
+
 # research data — personal corpus, not distributable
-research/koko-claude-corpus.json
-research/koko-x-posts.json
-research/voice-pattern-analysis.json
+research/
+
+# claude agents (evaluate.md moved to skill/references/)
+.claude/
+
+# review artifacts
+review-repo/
 
 # post history and drafts — per-user runtime data
 .bip-history.json
+.bip-changelog.json
 .bip-drafts/
 .bip-images/
 .bip-voice.json
@@ -16,11 +29,6 @@ research/voice-pattern-analysis.json
 
 # obsidian
 .obsidian/
-
-# one-time docs (not part of the product)
-build-log.md
-koko-ship-skill-iterations.md
-koko-ship-github-prep.md
 
 # OS
 .DS_Store

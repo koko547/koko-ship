@@ -173,5 +173,13 @@
     "format_dominance": "single tweet (73%)",
     "no_outcome_post_share": "~10% (named problems, real questions, vulnerability moments)",
     "author_tier_dominant": "10k-100k followers + verified"
+  },
+
+  "learned_patterns": {
+    "$comment": "Populated by the voice evolution loop. Patterns extracted from user edits to AI-generated posts. Only added after 3+ occurrences and user approval.",
+    "must_have": [],
+    "never_use": [],
+    "preferences": [],
+    "last_updated": null
   }
 }
