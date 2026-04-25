@@ -1,13 +1,13 @@
 """Build a voice profile from a 5-question interview.
 
 This script writes a starter questionnaire JSON file that the user fills in,
-then converts it to a voice profile. Most users won't run this directly —
+then converts it to 4 voice markdown files. Most users won't run this directly —
 the koko-ship skill walks them through the questions interactively, then
 calls this script with the answers.
 
 Usage:
     # Direct (skill calls this with answers JSON):
-    python3 setup_voice_questionnaire.py --answers-json '<json>' [--out PATH]
+    python3 setup_voice_questionnaire.py --answers-json '<json>' [--out-dir DIR]
 
     # Manual (rare):
     python3 setup_voice_questionnaire.py --print-template
@@ -176,12 +176,15 @@ def build_profile(answers):
 
 
 def main():
+    from voice_output import write_voice_markdown
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--answers-json", help="JSON string with answers")
     ap.add_argument("--answers-file", help="path to JSON file with answers")
     ap.add_argument("--print-template", action="store_true", help="print empty answer template")
     ap.add_argument("--print-questions", action="store_true", help="print the questions")
-    ap.add_argument("--out", default=str(Path.home() / ".bip-voice.json"))
+    ap.add_argument("--out-dir", default="voice",
+                    help="output directory for voice files (default: <cwd>/voice/)")
     args = ap.parse_args()
 
     if args.print_template:
@@ -203,10 +206,10 @@ def main():
         sys.exit(1)
 
     profile = build_profile(answers)
-    out = Path(args.out).expanduser()
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(profile, indent=2, ensure_ascii=False))
-    print(f"✓ voice profile written → {out}")
+    out_dir = Path(args.out_dir).expanduser()
+    write_voice_markdown(profile, out_dir, source_label="questionnaire")
+    print(f"✓ voice profile written → {out_dir}/")
+    print(f"  created: profile.md, patterns.md, marketing-voice.md, changelog.md")
 
 
 if __name__ == "__main__":

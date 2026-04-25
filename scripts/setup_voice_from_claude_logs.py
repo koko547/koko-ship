@@ -5,13 +5,14 @@ responses, never tool results), filters noise, then derives voice signals:
 length, language mix, openers, directive patterns, emoji usage, key phrases.
 
 Usage:
-    python3 setup_voice_from_claude_logs.py [--out PATH] [--exclude PROJECT_NAME ...] [--dry-run]
+    python3 setup_voice_from_claude_logs.py [--out-dir DIR] [--exclude PROJECT_NAME ...] [--dry-run]
 
 Defaults:
-    --out  ~/.bip-voice.json
+    --out-dir  <cwd>/voice/
     Reads all projects under ~/.claude/projects/
 
-Output: a voice profile JSON ready to be used by the koko-ship skill.
+Output: 4 voice markdown files in the output directory (profile.md, patterns.md,
+        marketing-voice.md, changelog.md).
 """
 import argparse
 import json
@@ -372,13 +373,28 @@ def build_voice_profile(analysis, source_name="claude_session_corpus"):
 
 
 def main():
+    from voice_output import write_voice_markdown, migrate_json_to_markdown
+
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", default=str(Path.home() / ".bip-voice.json"))
+    ap.add_argument("--out-dir", default="voice",
+                    help="output directory for voice files (default: <cwd>/voice/)")
     ap.add_argument("--exclude", action="append", default=[],
                     help="exclude project directory name(s) (repeatable)")
     ap.add_argument("--dry-run", action="store_true",
-                    help="print analysis without writing the file")
+                    help="print analysis without writing files")
     args = ap.parse_args()
+
+    out_dir = Path(args.out_dir).expanduser()
+
+    # Backward compat: migrate old .bip-voice.json if present
+    old_json = Path.cwd() / ".bip-voice.json"
+    if not old_json.exists():
+        old_json = Path.home() / ".bip-voice.json"
+    if old_json.exists() and not out_dir.exists():
+        print(f"found existing {old_json} — migrating to voice/ format...")
+        migrate_json_to_markdown(old_json, out_dir)
+        print(f"migrated. old file kept as backup at {old_json}")
+        print("re-analyzing for a fresh profile...\n")
 
     if not CLAUDE_BASE.exists():
         print(f"error: {CLAUDE_BASE} does not exist", file=sys.stderr)
@@ -399,6 +415,8 @@ def main():
     print("\nanalyzing voice...")
     analysis = analyze(messages)
     profile = build_voice_profile(analysis)
+    # Attach directive counts for patterns.md generation
+    profile["directive_counts"] = analysis.get("directive_counts", {})
 
     print(f"\n=== voice signals detected ===")
     print(f"  primary language:  {analysis['primary_lang']}")
@@ -409,13 +427,12 @@ def main():
     print(f"  top phrases:       {', '.join(analysis['top_phrases'][:6])}")
 
     if args.dry_run:
-        print("\n--dry-run: not writing file")
+        print("\n--dry-run: not writing files")
         return
 
-    out_path = Path(args.out).expanduser()
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(profile, indent=2, ensure_ascii=False))
-    print(f"\n✓ voice profile written → {out_path}")
+    write_voice_markdown(profile, out_dir, source_label="claude-session-corpus")
+    print(f"\n✓ voice profile written → {out_dir}/")
+    print(f"  created: profile.md, patterns.md, marketing-voice.md, changelog.md")
     print("\nyou can now generate posts. try:")
     print("  'make a BIP post about today'")
 

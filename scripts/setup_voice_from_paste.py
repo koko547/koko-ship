@@ -2,11 +2,11 @@
 
 The user (via the koko-ship skill) provides 3-5 examples of text that they
 wrote and feel sounds like them. This script analyzes the samples and
-produces a voice profile.
+produces 4 voice markdown files.
 
 Usage:
-    python3 setup_voice_from_paste.py --samples-json '<json array of strings>' [--out PATH]
-    python3 setup_voice_from_paste.py --samples-file samples.json
+    python3 setup_voice_from_paste.py --samples-json '<json array of strings>' [--out-dir DIR]
+    python3 setup_voice_from_paste.py --samples-file samples.json [--out-dir DIR]
 """
 import argparse
 import json
@@ -226,10 +226,13 @@ def build_profile(samples, analysis):
 
 
 def main():
+    from voice_output import write_voice_markdown
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--samples-json", help="JSON array of sample strings")
     ap.add_argument("--samples-file", help="path to JSON array of samples")
-    ap.add_argument("--out", default=str(Path.home() / ".bip-voice.json"))
+    ap.add_argument("--out-dir", default="voice",
+                    help="output directory for voice files (default: <cwd>/voice/)")
     args = ap.parse_args()
 
     if args.samples_json:
@@ -251,10 +254,10 @@ def main():
     analysis = analyze(samples)
     profile = build_profile(samples, analysis)
 
-    out = Path(args.out).expanduser()
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(profile, indent=2, ensure_ascii=False))
-    print(f"✓ voice profile written → {out}")
+    out_dir = Path(args.out_dir).expanduser()
+    write_voice_markdown(profile, out_dir, source_label="writing-samples")
+    print(f"✓ voice profile written → {out_dir}/")
+    print(f"  created: profile.md, patterns.md, marketing-voice.md, changelog.md")
     print(f"  analyzed {analysis['n_samples']} samples")
     print(f"  median length: {analysis['median_length']} chars")
     print(f"  primary lang: {analysis['primary_lang']}")
