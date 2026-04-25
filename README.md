@@ -1,125 +1,150 @@
 # koko-ship
 
-a Claude Code skill that generates build-in-public posts in your voice — not generic AI voice.
+a content engine that writes in your voice — not generic AI tone.
 
-## who this is for
+## the difference
 
-builders who ship with AI and want to talk about it without sounding like everyone else's ChatGPT.
+every AI content tool sounds the same. koko-ship sounds like you.
 
-## prerequisites
+**without koko-ship:**
+> Built a cool thing with Claude today! Excited to share my progress on the dashboard. Really loving how AI makes development faster. #buildinpublic
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and logged in (`claude` command works in your terminal)
-- Claude Pro subscription or API access
-- Python 3.8+ (optional — only needed for image generation features)
+**with koko-ship:**
+> two validation checks. same threshold. that's a bug.
+>
+> the check that picks the best draft and the check that decides
+> "ready to publish" were using the same score.
+>
+> "good enough to show you" ≠ "good enough to post."
+
+## how it works
+
+```
+Your real writing ──→ Voice Profile (4 files, 20+ signals)
+                           │
+                    ┌──────┴──────┐
+                    │   Writer    │  reads sessions, drafts 3 versions
+                    └──────┬──────┘
+                    ┌──────┴──────┐
+                    │   Editor    │  scores against your voice profile
+                    └──────┬──────┘
+                    ┌──────┴──────┐
+                    │     QA      │  catches leaks, jargon, platform issues
+                    └──────┬──────┘
+                           │
+                    Best draft ──→ You
+                           │
+                    Your edits ──→ Voice Evolution
+                           │         (learns from every edit)
+                           ↓
+                    Next post is sharper
+```
+
+## your voice profile
+
+koko-ship doesn't ask you to "describe your brand tone." it reads how you actually write and extracts patterns into 4 files:
+
+```
+voice/
+├── profile.md          what you sound like (evaluator checklist)
+├── patterns.md         how you think (deep layer)
+├── marketing-voice.md  what's publishable (public filter)
+└── changelog.md        how your voice evolves over time
+```
+
+every post is checked against your profile. if it doesn't sound like you, it gets rewritten before you see it.
+
+## get started
+
+**path 1: take the quiz (recommended)**
+1. go to [koko-ship.com](https://koko-ship.com) and take the voice quiz
+2. download your `voice.md` file
+3. open Claude Code in your project and say "use this as my voice profile"
+4. koko-ship expands it into your full voice profile
+5. say "make a bip post"
+
+**path 2: set up from scratch**
+1. install koko-ship (see below)
+2. open Claude Code in your project
+3. say "set up my voice"
+4. koko-ship scans your Claude Code sessions, or you paste writing samples, or answer 5 questions
+5. say "make a bip post"
 
 ## install
 
-```bash
-git clone https://github.com/koko547/koko-ship.git
-bash koko-ship/skill/install.sh
 ```
-
-this copies the skill to `~/.claude/skills/koko-ship/`. you can delete the cloned repo after.
+git clone https://github.com/koko547/koko-ship.git
+bash koko-ship/install.sh
+```
 
 ## usage
 
-open Claude Code **in any project you're actively building** (not the koko-ship repo):
-
-```bash
-cd ~/my-actual-project
-claude
 ```
-
-then tell Claude what you want. these are **prompts to Claude**, not shell commands:
-
+> set up my voice              ← first time (or "use this as my voice profile" with quiz file)
+> make a bip post              ← generate a post from your recent sessions
+> I want to sound more casual  ← update your voice profile directly
 ```
-> set up my voice
-```
-
-walks you through a 2-minute voice setup. scans your past Claude conversations, optional questionnaire, optional paste samples. builds a profile at `~/.bip-voice.json`.
-
-```
-> make a bip post
-```
-
-reads your recent building sessions, picks a moment, drafts 3 versions internally, scores them, delivers the strongest one.
-
-## the agent team
-
-three agents work behind one command.
-
-**writer** — reads your voice profile and recent sessions. drafts 3 versions. picks the strongest.
-
-**editor** — scores voice accuracy and content quality. sends it back if something's off.
-
-**QA** — catches jargon, repetition, sensitive info. platform-ready check.
-
-## what it does
-
-1. reads your recent Claude Code sessions for this project
-2. extracts candidate moments (things that shipped, broke, or surprised you)
-3. asks you to pick one moment
-4. drafts 3 versions internally with different hooks
-5. self-evaluates all 3 on hook / story / authenticity / relatability
-6. delivers the strongest one
-7. you edit, it learns from the diff for next time
-
-## before / after
-
-without koko-ship:
-
-> Built a cool thing with Claude today! Excited to share my progress on the dashboard. Really loving how AI makes development faster. #buildinpublic #indiehackers
-
-with koko-ship:
-
-> two quality gates. same passing score. that's a bug.
->
-> building a voice engine that writes posts in your voice. today i found the gate that picks the best draft and the gate that decides "ready to publish" were using the same threshold.
->
-> "good enough to show you" ≠ "good enough to post."
->
-> #koko-ship
 
 ## two quality gates
 
-every post goes through two checks before you see it:
+| gate | what it checks | threshold |
+|------|---------------|-----------|
+| editor | voice accuracy + content quality | voice 32/40+, content axes ≥ 7/10 |
+| QA | security, jargon, platform rules | clean pass required |
 
-| gate | what it does | threshold |
-|------|-------------|-----------|
-| self-eval (1st) | picks best of 3 drafts | all axes ≥ 7/10 |
-| evaluator (2nd) | publish decision | voice 32/40+, content 30/40+ |
+if both fail 3 times → asks you for a specific moment instead of delivering weak content.
 
 ## voice evolution
 
-the system learns from your edits — every change you make teaches it.
+your voice profile gets sharper two ways:
 
-1. AI draft saved before you see it
-2. you edit however you want, say "done"
-3. next run: diff analysis extracts patterns
-4. after 5+ edits with recurring patterns: profile update suggested
-5. you approve — voice profile updated
-6. next post is sharper
+**from your edits:** every time you edit an AI draft and say "ship it," koko-ship captures the diff. after 3+ recurring patterns, it suggests profile updates. you approve what sticks.
 
-target: post 1-3 you edit ~60%. post 8-10 ~10%. post 15+ you barely touch it.
+**from your direction:** tell koko-ship how you want to sound. "stop using parenthetical asides." "I want shorter posts." "more self-deprecating humor." it updates your profile immediately and logs the change.
 
-## voice profile
+## the skill suite
 
-your voice lives at `~/.bip-voice.json`. it's generated locally, never committed to any repo. stores how you write: tone, vocabulary, length, emoji usage, banned phrases. the profile sharpens over time as you edit posts.
-
-## python dependencies (optional)
-
-image generation and screenshot capture require Playwright:
-
-```bash
-pip install playwright && playwright install chromium
+```
+skills/
+├── voice-setup/    creates your voice profile (quiz import or from scratch)
+├── writer/         the main content engine
+├── editor/         internal — scores voice + content quality
+└── qa/             internal — security, jargon, platform checks
 ```
 
-the core workflow (voice setup + post drafting) works without any Python dependencies.
+## prerequisites
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`claude` command works)
+- Claude Pro or API access
+
+## examples
+
+- [`examples/session-to-post.md`](examples/session-to-post.md) — full pipeline walkthrough
+
+## before / after
+
+**without:**
+> Launched a new feature for our project management tool today. Dark mode is now available for all users.
+
+**with koko-ship:**
+> shipped dark mode at 2am because i couldn't stop staring at my own white screen. turns out 47% of our users had the same complaint. sometimes the best product decisions start with your own eyeballs hurting.
+
+---
+
+**without:**
+> Released an update to our API documentation with improved error handling.
+
+**with koko-ship:**
+> broke the API. again. third time this month. but this time i actually wrote down what went wrong before fixing it. the doc is better than the code now. not sure if that's a win.
 
 ## uninstall
 
-```bash
-rm -rf ~/.claude/skills/koko-ship
+```
+rm -rf ~/.claude/skills/koko-ship-writer
+rm -rf ~/.claude/skills/koko-ship-editor
+rm -rf ~/.claude/skills/koko-ship-qa
+rm -rf ~/.claude/skills/koko-ship-voice-setup
+rm -rf ~/.claude/skills/koko-ship-shared
 ```
 
 ## license
