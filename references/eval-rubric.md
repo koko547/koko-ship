@@ -2,8 +2,8 @@
 
 This is the canonical 4-axis quality rubric for koko-ship posts. It is used by:
 
-- **The skill itself** — for self-evaluation before delivering a draft to the user (see SKILL.md Step 7.5)
-- **The Evaluate Agent** (`references/evaluate.md`) — as a second-pass gate for the publish decision
+- **The writer skill** — for self-evaluation before delivering a draft to the user
+- **The editor skill** (`~/.claude/skills/koko-ship-editor/SKILL.md`) — as a second-pass gate for the publish decision
 
 If you change this rubric, both consumers update automatically. **Single source of truth.**
 
@@ -99,12 +99,12 @@ Does it sound like a real person, not AI?
 
 **The "would anyone else say this?" test:** Could 100 other indie hackers post this exact tweet without changing a word? If yes → max 5/10 on this axis.
 
-**Voice profile compliance:** If a `.bip-voice.json` is present in the project or user-global, the post must respect:
-- `language.primary`
-- `tone.do` and `tone.dont`
-- `personal_vocabulary.phrases_banned` (zero tolerance)
-- `length.max_chars`
-- `hashtags.rule`
+**Voice profile compliance:** If a `voice/profile.md` and `voice/marketing-voice.md` exist, the post must respect:
+- Language and register (from profile.md → Identity)
+- Signature patterns and anti-patterns (from profile.md)
+- Vocabulary markers — use freely / avoid (from profile.md)
+- Post length and format rules (from marketing-voice.md)
+- Hashtag rules (from marketing-voice.md)
 
 Voice violations cap Authenticity at 6.
 

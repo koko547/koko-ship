@@ -1,0 +1,3 @@
+# Core skill works without Python dependencies.
+# Optional — for card image generation only:
+# playwright>=1.40.0

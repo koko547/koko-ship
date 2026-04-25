@@ -305,6 +305,6 @@ This principle is **inactive** until 5 posts exist. Before that, don't worry abo
 
 ## Voice rules still apply
 
-These principles work alongside the user's voice profile (`.bip-voice.json`). The voice profile defines HOW to write (tone, vocabulary, emoji, length, hashtags). These principles define WHAT to write (hook, context, moment, specificity, ending).
+These principles work alongside the user's voice profile (`voice/profile.md` and `voice/marketing-voice.md`). The voice profile defines HOW to write (tone, vocabulary, emoji, length, hashtags). These principles define WHAT to write (hook, context, moment, specificity, ending).
 
 When in doubt: voice wins over structure. If the user's natural voice breaks a "principle" but sounds authentically like them, keep it.

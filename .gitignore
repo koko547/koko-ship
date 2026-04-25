@@ -1,40 +1,18 @@
-# voice files — personal, user-generated, never committed
+# Voice profiles (user-specific, never commit)
 voice/
-raw/
-
-# internal vault files (not part of the product)
-CLAUDE.md
-index.md
-log.md
-build-log.md
-koko-ship-skill-iterations.md
-koko-ship-github-prep.md
-
-# research data — personal corpus, not distributable
-research/
-
-# claude agents (evaluate.md moved to skill/references/)
-.claude/
-
-# review artifacts
-review-repo/
-
-# post history and drafts — per-user runtime data
+.bip-voice.json
 .bip-history.json
 .bip-changelog.json
+.bip-config.json
 .bip-drafts/
 .bip-images/
-.bip-voice.json
-.bip-config.json
 
-# obsidian
-.obsidian/
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
 
 # OS
 .DS_Store
 Thumbs.db
-
-# python
-__pycache__/
-*.pyc
-.env
